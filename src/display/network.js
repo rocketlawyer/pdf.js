@@ -94,7 +94,6 @@ NetworkManager.prototype = {
     var pendingRequest = this.pendingRequests[xhrId] = {
       xhr,
     };
-
     xhr.open('GET', this.url);
     xhr.withCredentials = this.withCredentials;
     for (var property in this.httpHeaders) {
@@ -104,12 +103,16 @@ NetworkManager.prototype = {
       }
       xhr.setRequestHeader(property, value);
     }
+    let info = JSON.parse(localStorage.getItem('RL-App-State'));
+    if(info && info.accessToken) {
+      xhr.setRequestHeader( 'Authorization', 'bearer ' + info.accessToken);
+    }
     if (this.isHttp && 'begin' in args && 'end' in args) {
       var rangeStr = args.begin + '-' + (args.end - 1);
       xhr.setRequestHeader('Range', 'bytes=' + rangeStr);
-      pendingRequest.expectedStatus = 206;
+      pendingRequest.expectedStatus = [201, 206];
     } else {
-      pendingRequest.expectedStatus = 200;
+      pendingRequest.expectedStatus = [200, 201];
     }
 
     var useMozChunkedLoading = supportsMozChunked && !!args.onProgressiveData;
@@ -195,11 +198,12 @@ NetworkManager.prototype = {
     // "A server MAY ignore the Range header". This means it's possible to
     // get a 200 rather than a 206 response from a range request.
     var ok_response_on_range_request =
+        // Not necessary since we aren't doing range content (yet)
         xhrStatus === OK_RESPONSE &&
-        pendingRequest.expectedStatus === PARTIAL_CONTENT_RESPONSE;
+        pendingRequest.expectedStatus.indexOf(PARTIAL_CONTENT_RESPONSE) !== -1;
 
     if (!ok_response_on_range_request &&
-        xhrStatus !== pendingRequest.expectedStatus) {
+        pendingRequest.expectedStatus.indexOf(xhrStatus) === -1) {
       if (pendingRequest.onError) {
         pendingRequest.onError(xhr.status);
       }
@@ -349,9 +353,8 @@ function PDFNetworkStreamFullRequestReader(manager, source) {
 PDFNetworkStreamFullRequestReader.prototype = {
   _onHeadersReceived:
       function PDFNetworkStreamFullRequestReader_onHeadersReceived() {
-    var fullRequestXhrId = this._fullRequestId;
-    var fullRequestXhr = this._manager.getRequestXhr(fullRequestXhrId);
-
+        var fullRequestXhrId = this._fullRequestId;
+        var fullRequestXhr = this._manager.getRequestXhr(fullRequestXhrId);
     const getResponseHeader = (name) => {
       return fullRequestXhr.getResponseHeader(name);
     };
