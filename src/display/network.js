@@ -110,9 +110,9 @@ NetworkManager.prototype = {
     if (this.isHttp && 'begin' in args && 'end' in args) {
       var rangeStr = args.begin + '-' + (args.end - 1);
       xhr.setRequestHeader('Range', 'bytes=' + rangeStr);
-      pendingRequest.expectedStatus = 206;
+      pendingRequest.expectedStatus = [201, 206];
     } else {
-      pendingRequest.expectedStatus = 200;
+      pendingRequest.expectedStatus = [200, 201];
     }
 
     var useMozChunkedLoading = supportsMozChunked && !!args.onProgressiveData;
@@ -198,11 +198,12 @@ NetworkManager.prototype = {
     // "A server MAY ignore the Range header". This means it's possible to
     // get a 200 rather than a 206 response from a range request.
     var ok_response_on_range_request =
+        // Not necessary since we aren't doing range content (yet)
         xhrStatus === OK_RESPONSE &&
-        pendingRequest.expectedStatus === PARTIAL_CONTENT_RESPONSE;
+        pendingRequest.expectedStatus.indexOf(PARTIAL_CONTENT_RESPONSE) !== -1;
 
     if (!ok_response_on_range_request &&
-        xhrStatus !== pendingRequest.expectedStatus) {
+        pendingRequest.expectedStatus.indexOf(xhrStatus) === -1) {
       if (pendingRequest.onError) {
         pendingRequest.onError(xhr.status);
       }
