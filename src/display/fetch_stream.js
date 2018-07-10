@@ -22,10 +22,7 @@ import {
 } from './network_utils';
 
 function createFetchOptions(headers, withCredentials, abortController) {
-  let info = JSON.parse(localStorage.getItem('RL-App-State'));
-  if(info && info.accessToken) {
-    headers.set('Authorization', 'bearer ' + info.accessToken);
-  }
+  headers.set('Authorization', 'bearer ' + getAccessToken());
   return {
     method: 'GET',
     headers,
@@ -34,6 +31,18 @@ function createFetchOptions(headers, withCredentials, abortController) {
     credentials: withCredentials ? 'include' : 'same-origin',
     redirect: 'follow',
   };
+}
+
+function getAccessToken() {
+  let info = JSON.parse(localStorage.getItem('RL-App-State'));
+  // for unregistered users
+  if (info && info.authInfo && info.authInfo.accessToken) {
+    return info.authInfo.accessToken;
+  }
+  // for registered users
+  else if(info && info.accessToken) {
+    return info.accessToken;
+  }
 }
 
 class PDFFetchStream {
