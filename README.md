@@ -1,3 +1,11 @@
+## To build PDF.js artifact
+
+1. `gulp web`
+2. `npm version <patch/major/minor>`
+3. `npm publish`
+
+Note: `npm publish` will attempt to publish the built artifact to RL's JFrog repo. Make sure you've provided the correct auth credentials (in .npmrc)
+
 # PDF.js
 
 PDF.js is a Portable Document Format (PDF) viewer that is built with HTML5.
