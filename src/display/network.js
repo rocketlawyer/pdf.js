@@ -103,10 +103,7 @@ NetworkManager.prototype = {
       }
       xhr.setRequestHeader(property, value);
     }
-    let info = JSON.parse(localStorage.getItem('RL-App-State'));
-    if(info && info.accessToken) {
-      xhr.setRequestHeader( 'Authorization', 'bearer ' + info.accessToken);
-    }
+    xhr.setRequestHeader( 'Authorization', 'bearer ' + getAccessToken());
     if (this.isHttp && 'begin' in args && 'end' in args) {
       var rangeStr = args.begin + '-' + (args.end - 1);
       xhr.setRequestHeader('Range', 'bytes=' + rangeStr);
@@ -563,6 +560,18 @@ PDFNetworkStreamRangeRequestReader.prototype = {
     this._close();
   },
 };
+
+function getAccessToken() {
+  let info = JSON.parse(localStorage.getItem('RL-App-State'));
+  // for unregistered users
+  if (info && info.authInfo && info.authInfo.accessToken) {
+    return info.authInfo.accessToken;
+  }
+  // for registered users
+  else if(info && info.accessToken) {
+    return info.accessToken;
+  }
+}
 
 export {
   PDFNetworkStream,
